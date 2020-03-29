@@ -11,6 +11,11 @@ orig_rows, orig_cols = im0.shape
 MARGIN_SIZE = 2 #thus window_size = 5 = 2*margin_size+1, has 25 points
 delta_s = 2.6
 delta_r = 14.0
+V_max = 10000
+
+# buffer w value, Space-time trade-off
+# buffer_w = np.zeros([2,100,100,100,100])-1
+# cur = np.array([0,0,0])
 
 def I(p):
     p
@@ -65,12 +70,16 @@ def E_d(f):
             try:
                 tmp += 1-NCC(p, fp)
             except IndexError:
-                print(p)
-                print(fp)
+                pass
     return tmp
 
+def V(fp, fq):
+    return min(np.square(fp - fq), V_max)
+
+def V_weight(p, q):
+    ret = np.exp()
 
 f = np.ones([orig_rows, orig_cols, 3])
 
-print(E_d(f))
+
 
