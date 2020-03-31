@@ -1,15 +1,15 @@
 import cv2
 import numpy as np
 
-MARGIN_SIZE = 2 #thus window_size = 5 = 2*margin_size+1, has 25 points
+MARGIN_SIZE = 3 #for ex window_size = 5 = 2*margin_size+1
 MAX_D = 64 #max disparity
 
 
-im0 = cv2.imread('im2.ppm',0)
-im1 = cv2.imread('im6.ppm',0)
+im0 = cv2.imread('im6.ppm', cv2.CV_8UC1)
+im1 = cv2.imread('im2.ppm', cv2.CV_8UC1)
 orig_rows, orig_cols = im0.shape
 
-avg_im0 = cv2.blur(im0, (2*MARGIN_SIZE+1, 2*MARGIN_SIZE+1))
+avg_im0 = cv2.blur(im0, (2*MARGIN_SIZE+1, 2*MARGIN_SIZE+1)).astype(np.float32)
 avg_im1 = cv2.blur(im1, (2*MARGIN_SIZE+1, 2*MARGIN_SIZE+1))
 
 ims=np.array([im0, im1])
@@ -37,29 +37,29 @@ def NCC(p, fp):
             q = p+[0,i,j]
             I_l = int(I_tilde(q, p))
             I_r = int(I_tilde(q+fp, p+fp))
-            s1 = s1 + I_l*I_r
+            s1 += I_l*I_r
             s2 += np.square(I_l)
             s3 += np.square(I_r)
     ret = s1/(np.sqrt(s2*s3))
     return ret
 
-def E_d(f):
-    sum = 0
-    tmp = 0
-    for i in range(MARGIN_SIZE, orig_rows-MARGIN_SIZE):
-        for j in range(MARGIN_SIZE, orig_cols-MARGIN_SIZE):
-            print(i, j)
-            fp = f[i][j]
-            p = np.array([0, i, j])
-            try:
-                tmp = 1-NCC(p, fp)
-                if (tmp is np.nan):
-                    return sum
-            except IndexError:
-                pass
-                tmp = 0
-            sum = sum + tmp
-    return sum
+# def E_d(f):
+#     sum = 0
+#     tmp = 0
+#     for i in range(MARGIN_SIZE, orig_rows-MARGIN_SIZE):
+#         for j in range(MARGIN_SIZE, orig_cols-MARGIN_SIZE):
+#             print(i, j)
+#             fp = f[i][j]
+#             p = np.array([0, i, j])
+#             try:
+#                 tmp = 1-NCC(p, fp)
+#                 if (tmp is np.nan):
+#                     return sum
+#             except IndexError:
+#                 pass
+#                 tmp = 0
+#             sum = sum + tmp
+#     return sum
 
 def disparity():
     f = np.ones([orig_rows, orig_cols, 3])
@@ -68,9 +68,9 @@ def disparity():
         for j in range(MARGIN_SIZE, orig_cols-MARGIN_SIZE):
             print(i, j)
             p = np.array([0, i, j])
-            l_ncc = 0
+            l_ncc = 0.6
             fp = np.array([1, 0, 0])
-            for m in range(-1, 2):
+            for m in range(0, 1):
                 for n in range(0, MAX_D):
                     t_fp = np.array([1, m, n])
                     try:
@@ -78,6 +78,7 @@ def disparity():
                     except IndexError:
                         t_ncc = 0
                     if t_ncc > l_ncc:
+                        print(t_ncc)
                         l_ncc = t_ncc
                         fp = t_fp
             f[i][j] = fp
@@ -87,10 +88,10 @@ def disparity():
 raw_d = disparity()
 # np.savetxt("raw_d.csv", raw_d, delimiter=',')
 
-d = np.sum(raw_d, axis=2)
-np.savetxt("d.csv", d, delimiter=',')
+d = np.sum(raw_d, axis=2)-1
+np.savetxt("d2.csv", d, delimiter=',')
 
 disp = cv2.normalize(d, d, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX,
                           dtype=cv2.CV_8U)
-np.savetxt("disp.csv", disp, delimiter=',')
+np.savetxt("disp2.csv", disp, delimiter=',')
 
